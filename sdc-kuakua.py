@@ -1,5 +1,14 @@
 """
-    Group Chat Robot v0.2 sdc-version
+    Group Chat Robot v0.3 sdc-version
+    2019-05-19
+    1、增加记日志功能
+    2、待增加群聊转发功能
+    3、待增加管理员功能
+    4、待增加可配置化功能
+    5、待支持附件、图片等
+    6、待增支持加微信昵称 ActualNickName，再优化为微信号 ActualUserName，记录日志
+    7、待增加写入数据库功能
+    8、待增加群好友统计分析功能
 """
 # coding: utf-8
 
@@ -7,6 +16,29 @@ import itchat, re
 from itchat.content import *
 import random
 import time
+import logging
+import os
+
+# 第一步，创建一个logger
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)  # Log等级总开关
+# 第二步，创建一个handler，用于写入日志文件
+rq = time.strftime('%Y%m%d', time.localtime(time.time()))
+log_name = rq + '.log'
+logfile = log_name
+fh = logging.FileHandler(logfile, mode='w')
+fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
+# 第三步，定义handler的输出格式
+formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+fh.setFormatter(formatter)
+# 第四步，将logger添加到handler里面
+logger.addHandler(fh)
+# 日志
+logger.debug('this is a logger debug message')
+logger.info('this is a logger info message')
+logger.warning('this is a logger warning message')
+logger.error('this is a logger error message')
+logger.critical('this is a logger critical message')
 
 """
     Constants
@@ -46,13 +78,15 @@ REPLY = {'工作': ['时刻记着工作，SDC好员工。', '且不说你的工�
 @itchat.msg_register([TEXT], isGroupChat=True)
 # 在注册时增加isGroupChat=True将判定为群聊回复
 def text_reply(msg):
-    # 微信群名称
+    # 设置监控的微信群名称'SDC夸夸群'
     if msg['User']['NickName'] == 'SDC夸夸群':
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         print('消息来自: %s' % msg['User']['NickName'])
+        logger.info('消息来自: %s' % msg['User']['NickName'])
         # 发送者的昵称
         username = msg['ActualNickName']
         print('发送者: %s' % username)
+        logger.info('发送者: %s' % username)
 
         match = re.search('工作', msg['Text']) or re.search('加班', msg['Text']) \
                 or re.search('开发', msg['Text']) or re.search('测试', msg['Text']) \
@@ -61,7 +95,9 @@ def text_reply(msg):
             print('-+-+' * 5)
             print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
             print('消息内容: %s' % msg['Content'])
+            logger.info('消息内容: %s' % msg['Content'])
             print('工作 -- 匹配: %s' % (match is not None))
+            logger.info('工作 -- 匹配: %s' % (match is not None))
             randomIdx = random.randint(0, len(REPLY['工作']) - 1)
             itchat.send('%s\n%s' % (username, REPLY['工作'][randomIdx]), msg['FromUserName'])
 
@@ -70,7 +106,9 @@ def text_reply(msg):
             print('-+-+' * 5)
             print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
             print('消息内容: %s' % msg['Content'])
+            logger.info('消息内容: %s' % msg['Content'])
             print('学习 -- 匹配: %s' % (match is not None))
+            logger.info('学习 -- 匹配: %s' % (match is not None))
             randomIdx = random.randint(0, len(REPLY['学习']) - 1)
             itchat.send('%s\n%s' % (username, REPLY['学习'][randomIdx]), msg['FromUserName'])
 
@@ -79,7 +117,9 @@ def text_reply(msg):
             print('-+-+' * 5)
             print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
             print('消息内容: %s' % msg['Content'])
+            logger.info('消息内容: %s' % msg['Content'])
             print('问题 -- 匹配: %s' % (match is not None))
+            logger.info('问题 -- 匹配: %s' % (match is not None))
             randomIdx = random.randint(0, len(REPLY['问题']) - 1)
             itchat.send('%s\n%s' % (username, REPLY['问题'][randomIdx]), msg['FromUserName'])
 
@@ -88,7 +128,9 @@ def text_reply(msg):
             print('-+-+' * 5)
             print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
             print('消息内容: %s' % msg['Content'])
+            logger.info('消息内容: %s' % msg['Content'])
             print('夸赞 -- 匹配: %s' % (match is not None))
+            logger.info('夸赞 -- 匹配: %s' % (match is not None))
             randomIdx = random.randint(0, len(REPLY['夸赞']) - 1)
             itchat.send('%s\n%s' % (username, REPLY['夸赞'][randomIdx]), msg['FromUserName'])
 
@@ -96,12 +138,15 @@ def text_reply(msg):
 
         if msg['isAt']:
             # 遇到@我的消息时
+            logger.info('At我的消息内容: %s' % msg['Content'])
             randomIdx = random.randint(0, len(REPLY['default']) - 1)
             itchat.send('%s\n%s' % (username, REPLY['default'][randomIdx]), msg['FromUserName'])
             print('-+-+' * 5)
 
 
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+logger.info('开始登录，SDC夸夸群.')
 itchat.auto_login(enableCmdQR=0, hotReload=True)
 itchat.run()
+logger.info('异常退出.')
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
